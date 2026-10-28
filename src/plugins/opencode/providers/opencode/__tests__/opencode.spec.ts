@@ -1,7 +1,8 @@
 /**
  * Unit tests for the built-in `opencode` Provider. OpenCode is an
  * open-source, model-agnostic terminal coding agent; under the opencode lens
- * this provider classifies its OWN agents (`.opencode/agent/*.md`) and
+ * this provider classifies its OWN agents (`.opencode/agent/*.md` and
+ * `.opencode/agents/*.md`) and
  * commands (`.opencode/commands/*.md`), plus skills from the three project
  * homes OpenCode reads (`.opencode/skills/`, `.claude/skills/`,
  * `.agents/skills/`). Claude-compat is asymmetric: skills cross over, agents
@@ -77,9 +78,16 @@ describe('opencode provider, manifest shape', () => {
 });
 
 describe('opencode provider, classify (own territory + the skill homes it reads)', () => {
-  it('claims `.opencode/agent/<name>.md` as agent (singular `agent`)', () => {
+  it('claims legacy `.opencode/agent/<name>.md` as agent', () => {
     strictEqual(
       opencodeProvider.classify('.opencode/agent/opencode-agent-review.md', {}),
+      'agent',
+    );
+  });
+
+  it('claims OpenCode V2 `.opencode/agents/<name>.md` as agent', () => {
+    strictEqual(
+      opencodeProvider.classify('.opencode/agents/opencode-agent-v2.md', {}),
       'agent',
     );
   });

@@ -6,10 +6,11 @@
  * Three on-disk families, all markdown + YAML frontmatter, so a SINGLE `read`
  * rule covers them and `classify()` routes each path to its kind:
  *
- *   - **agents** (`.opencode/agent/<name>.md`, SINGULAR `agent`): its OWN
- *     kind. Frontmatter is `description` + `mode` (all|primary|subagent) +
- *     `permission` + `model`; there is NO `name` field, the filename stem is
- *     the handle.
+ *   - **agents** (`.opencode/agent/<name>.md` and
+ *     `.opencode/agents/<name>.md`): its OWN kind. OpenCode V2 uses the plural
+ *     directory while older projects use the singular directory. Frontmatter
+ *     is `description` + `mode` (all|primary|subagent) + `permission` +
+ *     `model`; there is NO `name` field, the filename stem is the handle.
  *   - **commands** (`.opencode/commands/<name>.md`, PLURAL `commands`): its
  *     OWN kind, the slash-invocable (`/<name>`). Frontmatter is `description`
  *     + optional `agent` / `model`; the filename stem is the command name.
@@ -25,7 +26,8 @@
  * **Claude-compat is asymmetric.** OpenCode's Claude Code compatibility covers
  * the `CLAUDE.md` instruction file and `.claude/skills/` ONLY, NOT
  * `.claude/agents/` (OpenCode agents use their own `mode` / `permission`
- * frontmatter, a different format). So `agent` claims only `.opencode/agent/`;
+ * frontmatter, a different format). So `agent` claims only `.opencode/agent/`
+ * and `.opencode/agents/`;
  * only `skill` reaches into `.claude/skills/`. The global
  * `~/.config/opencode/...` and `~/.claude/...` homes OpenCode also reads are
  * excluded by skill-map's hard "never read $HOME" invariant.
@@ -82,7 +84,7 @@ export const opencodeProvider: IBuiltInManifest<IProvider> = {
   pluginId: OPENCODE_PLUGIN_ID,
   kind: 'provider',
   description:
-    'Classifies `.opencode/agent/*.md` as OpenCode agents and `.opencode/commands/*.md` as OpenCode commands (its own kinds), and skills under `.opencode/skills/`, `.claude/skills/`, and `.agents/skills/` (the project-level homes OpenCode reads).',
+    'Classifies `.opencode/agent/*.md` and `.opencode/agents/*.md` as OpenCode agents, `.opencode/commands/*.md` as OpenCode commands (its own kinds), and skills under `.opencode/skills/`, `.claude/skills/`, and `.agents/skills/` (the project-level homes OpenCode reads).',
 
   // Provider identity for the active-lens dropdown, the topbar lens chip, and
   // the per-node provider chip. OpenCode has no strong model vendor (it is
@@ -180,7 +182,8 @@ export const opencodeProvider: IBuiltInManifest<IProvider> = {
         icon: { kind: 'pi', id: 'pi-user' },
       },
       // No `name` frontmatter field: the filename stem
-      // (`.opencode/agent/<name>.md`) is the handle.
+      // (`.opencode/agent/<name>.md` or `.opencode/agents/<name>.md`) is the
+      // handle.
       identifiers: ['filename-basename'],
     },
     command: {
@@ -221,9 +224,9 @@ export const opencodeProvider: IBuiltInManifest<IProvider> = {
 
   classify(path: string): string | null {
     const lower = path.toLowerCase();
-    // OpenCode's own agents: `.opencode/agent/<name>.md` (SINGULAR `agent`,
-    // one file level, no subfolder).
-    if (/^\.opencode\/agent\/[^/]+\.md$/.test(lower)) return 'agent';
+    // OpenCode's own agents: legacy `.opencode/agent/<name>.md` and V2
+    // `.opencode/agents/<name>.md`. Both are one file level, with no subfolder.
+    if (/^\.opencode\/agents?\/[^/]+\.md$/.test(lower)) return 'agent';
     // OpenCode's own commands: `.opencode/commands/<name>.md` (PLURAL
     // `commands`, asymmetric with the singular `agent`, per OpenCode's docs).
     if (/^\.opencode\/commands\/[^/]+\.md$/.test(lower)) return 'command';
